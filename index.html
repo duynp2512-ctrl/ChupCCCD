@@ -528,74 +528,114 @@
 
   async function generateJPG() {
     const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
-    const W=2480, H=1748; canvas.width=W; canvas.height=H;
-    ctx.fillStyle='#f8fafc'; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#1D6AFF'; ctx.fillRect(0,0,W,110);
-    ctx.fillStyle='#fff'; ctx.font='bold 56px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('HỒ SƠ CĂN CƯỚC CÔNG DÂN',W/2,74);
+    // Khổ A4 đứng (300dpi): Rộng 2480 x Cao 3508
+    const W = 2480, H = 3508; canvas.width = W; canvas.height = H;
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#1D6AFF'; ctx.fillRect(0,0,W,130);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 56px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('HỒ SƠ CĂN CƯỚC CÔNG DÂN', W/2, 85);
 
-    const cW=870, cH=Math.round(cW*53.98/85.6), M=80;
-    const drawCard = async (src,x,y,w,h) => {
-      const img=await loadImg(src);
-      rr(ctx,x,y,w,h,20); ctx.fillStyle='#E0E7F5'; ctx.fill();
-      ctx.save(); rr(ctx,x,y,w,h,20); ctx.clip(); ctx.drawImage(img,x,y,w,h); ctx.restore();
-      ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=3; rr(ctx,x,y,w,h,20); ctx.stroke();
+    // --- QUY ĐỔI KÍCH THƯỚC (1cm = 118.11px) ---
+    const cm2px = 118.11;
+    const wID = 10 * cm2px;       // 10cm = ~1181px
+    const hID = 7 * cm2px;        // 7cm = ~827px
+    const sizePortrait = 10 * cm2px; // 10cm x 10cm = ~1181px
+
+    // --- TÍNH TOÁN VỊ TRÍ ---
+    const gapX = 40; // Khoảng cách giữa 2 thẻ CCCD (px)
+    const startX = (W - (wID * 2 + gapX)) / 2; // Canh giữa cả 2 thẻ trên trang
+    const startY = 180; // Vị trí Y bắt đầu
+    const portraitY = startY + hID + 100; // Cách thẻ CCCD 100px xuống dưới
+
+    // Hàm phụ vẽ ảnh ép đúng kích thước
+    const drawImg = async (src, x, y, w, h) => {
+      const img = await loadImg(src);
+      ctx.drawImage(img, x, y, w, h); // Ép cứng width, height
+      ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 4; 
+      ctx.strokeRect(x, y, w, h);
     };
 
-    if (state.front)    await drawCard(state.front, M, 150, cW, cH);
-    if (state.back)     await drawCard(state.back, M+cW+60, 150, cW, cH);
-    if (state.portrait) await drawCard(state.portrait, W-M-380, 150, 380, Math.round(380*4/3));
+    // Vẽ 3 ảnh
+    if (state.front)    await drawImg(state.front, startX, startY, wID, hID);
+    if (state.back)     await drawImg(state.back, startX + wID + gapX, startY, wID, hID);
+    if (state.portrait) await drawImg(state.portrait, (W - sizePortrait) / 2, portraitY, sizePortrait, sizePortrait);
 
-    const info=getInfo(), iTop=150+cH+70;
-    ctx.fillStyle='#1D6AFF'; ctx.font='bold 44px sans-serif'; ctx.textAlign='left';
-    ctx.fillText('THÔNG TIN CÁ NHÂN',M,iTop);
-    ctx.fillStyle='#CBD5E1'; ctx.fillRect(M,iTop+16,900,3);
-    ctx.fillStyle='#111827'; ctx.font='38px sans-serif';
-    let iy=iTop+80; const c2=M+900;
-    ctx.fillText(`Họ và tên:  ${info.name}`,M,iy);   ctx.fillText(`Số ĐT:  ${info.phone}`,c2,iy); iy+=65;
-    ctx.fillText(`Ngày sinh:  ${info.dob}`,M,iy);    ctx.fillText(`Giới tính:  ${info.gender}`,c2,iy); iy+=65;
-    ctx.fillText(`Email:  ${info.email}`,M,iy); iy+=65;
-    ctx.fillText(`Địa chỉ:  ${info.address}`,M,iy);
-    ctx.font='italic 28px sans-serif'; ctx.fillStyle='#9CA3AF'; ctx.textAlign='right';
-    ctx.fillText(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`,W-M,H-50);
+    // --- PHẦN THÔNG TIN CÁ NHÂN ---
+    let currentY = portraitY + sizePortrait + 160;
+    const info = getInfo(), M = 150;
+    ctx.fillStyle = '#1D6AFF'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('THÔNG TIN CÁ NHÂN', M, currentY);
+    ctx.fillStyle = '#CBD5E1'; ctx.fillRect(M, currentY + 20, W - M * 2, 3);
+    
+    ctx.fillStyle = '#111827'; ctx.font = '38px sans-serif';
+    let iy = currentY + 90; const c2 = W / 2 + 50;
+    ctx.fillText(`Họ và tên:  ${info.name}`, M, iy);   ctx.fillText(`Số ĐT:  ${info.phone}`, c2, iy); iy += 75;
+    ctx.fillText(`Ngày sinh:  ${info.dob}`, M, iy);    ctx.fillText(`Giới tính:  ${info.gender}`, c2, iy); iy += 75;
+    ctx.fillText(`Email:  ${info.email}`, M, iy); iy += 75;
+    ctx.fillText(`Địa chỉ:  ${info.address}`, M, iy);
+    
+    ctx.font = 'italic 32px sans-serif'; ctx.fillStyle = '#9CA3AF'; ctx.textAlign = 'right';
+    ctx.fillText(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, W - M, H - 60);
 
-    const a=document.createElement('a');
-    a.download=`CCCD_${info.name.replace(/\s/g,'_')}.jpg`;
-    a.href=canvas.toDataURL('image/jpeg',.92); a.click();
+    const a = document.createElement('a');
+    a.download = `CCCD_${info.name.replace(/\s/g,'_')}.jpg`;
+    a.href = canvas.toDataURL('image/jpeg', 0.92); a.click();
   }
 
-  async function generatePDF() {
-    const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
-    const pw=doc.internal.pageSize.getWidth(), M=14, info=getInfo();
-    doc.setFillColor(29,106,255); doc.rect(0,0,pw,22,'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont('helvetica','bold');
-    doc.text('HỒ SƠ CĂN CƯỚC CÔNG DÂN',pw/2,14,{align:'center'});
+ async function generatePDF() {
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4'); // 'p' = Đứng, 'mm' = Milimet
+    const pw = doc.internal.pageSize.getWidth(), M = 14, info = getInfo();
+    
+    doc.setFillColor(29, 106, 255); doc.rect(0, 0, pw, 22, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(15); doc.setFont('helvetica', 'bold');
+    doc.text('HỒ SƠ CĂN CƯỚC CÔNG DÂN', pw / 2, 14, {align: 'center'});
 
-    const cW=85.6, cH=53.98; let y=28;
-    if (state.front)    { doc.addImage(state.front,'JPEG',M,y,cW,cH); doc.setDrawColor(200,200,200); doc.rect(M,y,cW,cH); }
-    if (state.back)     { doc.addImage(state.back,'JPEG',M+cW+6,y,cW,cH); doc.rect(M+cW+6,y,cW,cH); }
-    if (state.portrait) { const pW=36,pH=pW*4/3; doc.addImage(state.portrait,'JPEG',pw-M-pW,y,pW,pH); doc.rect(pw-M-pW,y,pW,pH); }
+    // --- KÍCH THƯỚC CHUẨN (mm) ---
+    const wID = 100; // 10cm
+    const hID = 70;  // 7cm
+    const sizePortrait = 100; // 10cm x 10cm
 
-    y+=cH+14;
-    doc.setTextColor(29,106,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text('THÔNG TIN CÁ NHÂN',M,y); y+=5;
-    doc.setDrawColor(29,106,255); doc.setLineWidth(.4); doc.line(M,y,pw-M,y); y+=9;
+    // --- TÍNH TOÁN VỊ TRÍ ---
+    const startY = 32;
+    const gapX = 4; // Khoảng cách giữa 2 thẻ: 4mm
+    const startX = (pw - (wID * 2 + gapX)) / 2; // Cân giữa trang
+    const portraitY = startY + hID + 12; // Cách 12mm xuống dưới
 
-    doc.setTextColor(30,30,30); doc.setFontSize(10); const c2=pw/2+4;
-    const row=(l1,v1,l2,v2)=>{
-      doc.setFont('helvetica','bold'); doc.setTextColor(100);
-      doc.text(l1,M,y); if(l2) doc.text(l2,c2,y);
-      doc.setFont('helvetica','normal'); doc.setTextColor(30);
-      doc.text(v1,M+28,y); if(v2) doc.text(v2,c2+26,y); y+=9;
+    // Hàm phụ vẽ ảnh PDF
+    const drawImgPdf = async (src, x, y, w, h) => {
+        doc.addImage(src, 'JPEG', x, y, w, h);
+        doc.setDrawColor(200, 200, 200); 
+        doc.rect(x, y, w, h);
     };
-    row('Họ và tên:',info.name,'Số ĐT:',info.phone);
-    row('Ngày sinh:',info.dob,'Giới tính:',info.gender);
-    row('Email:',info.email,null,null);
-    row('Địa chỉ:',info.address,null,null);
 
-    const ph=doc.internal.pageSize.getHeight();
+    // Vẽ 3 ảnh
+    if (state.front)    await drawImgPdf(state.front, startX, startY, wID, hID);
+    if (state.back)     await drawImgPdf(state.back, startX + wID + gapX, startY, wID, hID);
+    if (state.portrait) await drawImgPdf(state.portrait, (pw - sizePortrait) / 2, portraitY, sizePortrait, sizePortrait);
+
+    // --- PHẦN THÔNG TIN CÁ NHÂN ---
+    let infoY = portraitY + sizePortrait + 15;
+    doc.setTextColor(29, 106, 255); doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('THÔNG TIN CÁ NHÂN', M, infoY); infoY += 6;
+    doc.setDrawColor(29, 106, 255); doc.setLineWidth(.4); doc.line(M, infoY, pw - M, infoY); infoY += 10;
+
+    doc.setTextColor(30, 30, 30); doc.setFontSize(10); const c2 = pw / 2 + 4;
+    const row = (l1, v1, l2, v2) => {
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(100);
+      doc.text(l1, M, infoY); if(l2) doc.text(l2, c2, infoY);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(30);
+      doc.text(v1, M + 28, infoY); if(v2) doc.text(v2, c2 + 26, infoY); infoY += 9;
+    };
+    row('Họ và tên:', info.name, 'Số ĐT:', info.phone);
+    row('Ngày sinh:', info.dob, 'Giới tính:', info.gender);
+    row('Email:', info.email, null, null);
+    row('Địa chỉ:', info.address, null, null);
+
+    const ph = doc.internal.pageSize.getHeight();
     doc.setFontSize(7); doc.setTextColor(170);
-    doc.text(`Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,pw-M,ph-8,{align:'right'});
+    doc.text(`Xuất lúc: ${new Date().toLocaleString('vi-VN')}`, pw - M, ph - 8, {align: 'right'});
+    
     doc.save(`CCCD_${info.name.replace(/\s/g,'_')}.pdf`);
   }
 
