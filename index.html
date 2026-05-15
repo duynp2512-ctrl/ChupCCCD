@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Chụp CCCD Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --blue: #1D6AFF; --blue-light: #EBF1FF;
+      --bg: #F2F4F8; --card: #ffffff;
+      --text: #111827; --text-2: #6B7280; --border: #E5E7EB;
+      --green: #16A34A; --green-bg: #DCFCE7;
+      --radius: 20px; --radius-sm: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#0D0F14; --card:#181B22; --text:#F3F4F6; --text-2:#9CA3AF; --border:#2A2D36; --blue-light:#1A2540; --green-bg:#052E16; }
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Be Vietnam Pro',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:110px; -webkit-tap-highlight-color:transparent; }
+
+    /* Header */
+    header { position:sticky; top:0; z-index:40; background:rgba(255,255,255,.88); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:13px 18px; display:flex; align-items:center; gap:12px; }
+    @media (prefers-color-scheme:dark) { header { background:rgba(24,27,34,.88); } }
+    .hdr-icon { width:36px; height:36px; border-radius:10px; background:var(--blue); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .hdr-icon svg { color:#fff; width:18px; height:18px; }
+    .hdr-title { font-size:16px; font-weight:700; letter-spacing:-.3px; }
+    .hdr-sub { font-size:11px; color:var(--text-2); margin-top:1px; }
+
+    /* Main */
+    main { max-width:520px; margin:0 auto; padding:18px 14px; display:flex; flex-direction:column; gap:12px; }
+
+    /* Stepper */
+    .stepper { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; position:relative; }
+    .stepper-track { position:absolute; top:50%; left:52px; right:52px; height:2px; background:var(--border); transform:translateY(-50%); z-index:0; }
+    .stepper-fill { height:100%; background:var(--blue); width:0%; transition:width .5s ease; }
+    .step { display:flex; flex-direction:column; align-items:center; gap:5px; z-index:1; }
+    .step-dot { width:32px; height:32px; border-radius:50%; border:2px solid var(--border); background:var(--card); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--text-2); transition:all .3s; }
+    .step.active .step-dot { background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 0 0 4px rgba(29,106,255,.15); }
+    .step.done .step-dot { background:var(--green); border-color:var(--green); color:#fff; }
+    .step-label { font-size:10px; font-weight:600; color:var(--text-2); transition:color .3s; }
+    .step.active .step-label { color:var(--blue); }
+    .step.done .step-label { color:var(--green); }
+
+    /* Card */
+    .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); padding:18px; animation:slideUp .4s ease both; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .card:nth-child(2){animation-delay:.05s} .card:nth-child(3){animation-delay:.1s}
+    .card:nth-child(4){animation-delay:.15s} .card:nth-child(5){animation-delay:.2s}
+    .card:nth-child(6){animation-delay:.25s}
+
+    .card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:3px; }
+    .card-title { font-size:15px; font-weight:700; letter-spacing:-.2px; }
+    .card-desc { font-size:12px; color:var(--text-2); margin-bottom:12px; margin-top:3px; }
+
+    .badge-done { display:none; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--green); background:var(--green-bg); padding:3px 10px; border-radius:20px; }
+    .badge-done.show { display:flex; }
+    .badge-done svg { width:12px; height:12px; }
+
+    /* Preview */
+    .preview-wrap { border:2px dashed var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--blue-light); cursor:pointer; position:relative; display:flex; align-items:center; justify-content:center; margin-bottom:12px; transition:border-color .2s; }
+    .preview-wrap:hover { border-color:var(--blue); }
+    .preview-wrap.landscape { aspect-ratio:856/539; }
+    .preview-wrap.portrait { width:140px; aspect-ratio:3/4; margin:0 auto 12px; }
+    .preview-placeholder { display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px; }
+    .preview-placeholder span { font-size:12px; color:var(--text-2); font-weight:500; }
+    .card-svg { width:75%; opacity:.3; }
+    .preview-img { width:100%; height:100%; object-fit:cover; display:none; }
+    .preview-img.show { display:block; }
+    .retake-btn { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,.55); color:#fff; border:none; border-radius:8px; padding:5px 10px; font-size:11px; font-weight:600; cursor:pointer; display:none; align-items:center; gap:4px; font-family:inherit; }
+    .retake-btn.show { display:flex; }
+    .retake-btn svg { width:12px; height:12px; }
+
+    /* Buttons */
+    .btn { width:100%; height:48px; border-radius:14px; font-size:14px; font-weight:700; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .2s,transform .15s; font-family:inherit; }
+    .btn:active { opacity:.75; transform:scale(.98); }
+    .btn-primary { background:var(--blue); color:#fff; }
+    .btn svg { width:17px; height:17px; }
+
+    /* Form */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .field { display:flex; flex-direction:column; gap:5px; }
+    .field-full { grid-column:1/-1; }
+    label { font-size:11px; font-weight:700; color:var(--text-2); text-transform:uppercase; letter-spacing:.5px; }
+    input, select { width:100%; height:44px; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:0 14px; font-size:14px; font-family:inherit; color:var(--text); background:var(--bg); outline:none; transition:border-color .2s,box-shadow .2s; }
+    input:focus, select:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(29,106,255,.1); }
+
+    /* Export radio */
+    .export-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .export-opt input { display:none; }
+    .export-card { border:2px solid var(--border); border-radius:var(--radius-sm); padding:14px 12px; text-align:center; cursor:pointer; transition:all .2s; display:flex; flex-direction:column; align-items:center; gap:5px; }
+    .export-card svg { width:22px; height:22px; color:var(--text-2); transition:color .2s; }
+    .export-card span { font-size:13px; font-weight:600; color:var(--text-2); transition:color .2s; }
+    .export-card small { font-size:10px; color:var(--text-2); }
+    .export-opt input:checked + .export-card { border-color:var(--blue); background:var(--blue-light); }
+    .export-opt input:checked + .export-card svg,
+    .export-opt input:checked + .export-card span { color:var(--blue); }
+
+    /* Bottom bar */
+    .bottom-bar { position:fixed; bottom:0; left:0; right:0; padding:12px 16px 28px; background:rgba(255,255,255,.88); backdrop-filter:blur(20px); border-top:1px solid var(--border); z-index:40; }
+    @media (prefers-color-scheme:dark) { .bottom-bar { background:rgba(24,27,34,.88); } }
+    .btn-export { width:100%; max-width:520px; margin:0 auto; height:54px; border-radius:16px; font-size:15px; font-weight:700; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--blue); color:#fff; transition:opacity .2s,transform .15s; font-family:inherit; box-shadow:0 8px 24px rgba(29,106,255,.28); }
+    .btn-export:active { opacity:.75; transform:scale(.99); }
+    .btn-export:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .btn-export svg { width:18px; height:18px; }
+
+    .spinner { width:18px; height:18px; border:2.5px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:none; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* Toast */
+    .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px); background:#1F2937; color:#fff; padding:10px 22px; border-radius:40px; font-size:13px; font-weight:600; z-index:999; transition:transform .35s cubic-bezier(.18,.89,.32,1.28); white-space:nowrap; }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+
+    canvas { display:none; }
+
+    /* ══ CAMERA OVERLAY ══ */
+    #cam-overlay { position:fixed; inset:0; z-index:200; background:#000; display:none; flex-direction:column; }
+    #cam-overlay.open { display:flex; }
+
+    #cam-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; }
+
+    /* Dimmed mask with cut-out guide */
+    .cam-mask { position:absolute; inset:0; pointer-events:none; }
+
+    /* Guide frame */
+    .cam-guide-wrap { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+    .cam-guide { position:relative; border:2.5px solid rgba(255,255,255,.8); border-radius:14px; box-shadow:0 0 0 9999px rgba(0,0,0,.5); }
+    .cam-guide.landscape { width:88%; aspect-ratio:856/539; }
+    .cam-guide.portrait  { width:50%; aspect-ratio:3/4; }
+
+    /* Corner marks */
+    .cam-guide::before,.cam-guide::after,.cam-guide .c3,.cam-guide .c4 { content:''; position:absolute; width:22px; height:22px; border-color:#1D6AFF; border-style:solid; }
+    .cam-guide::before { top:-3px; left:-3px;   border-width:3px 0 0 3px; border-radius:10px 0 0 0; }
+    .cam-guide::after  { top:-3px; right:-3px;  border-width:3px 3px 0 0; border-radius:0 10px 0 0; }
+    .cam-guide .c3     { bottom:-3px; left:-3px;  border-width:0 0 3px 3px; border-radius:0 0 0 10px; }
+    .cam-guide .c4     { bottom:-3px; right:-3px; border-width:0 3px 3px 0; border-radius:0 0 10px 0; }
+
+    /* Scan line */
+    .scan-line { position:absolute; left:8px; right:8px; height:2px; background:linear-gradient(90deg,transparent,#1D6AFF,transparent); animation:scan 2.2s ease-in-out infinite; }
+    @keyframes scan { 0%{top:8%;opacity:1} 50%{top:88%;opacity:1} 51%{opacity:0} 100%{top:8%;opacity:0} }
+
+    /* Top bar */
+    .cam-top { position:absolute; top:0; left:0; right:0; padding:env(safe-area-inset-top,16px) 16px 16px; padding-top:max(env(safe-area-inset-top),16px); background:linear-gradient(to bottom,rgba(0,0,0,.65),transparent); display:flex; align-items:center; gap:12px; z-index:10; }
+    .cam-hint { flex:1; color:#fff; font-size:14px; font-weight:600; text-align:center; text-shadow:0 1px 4px rgba(0,0,0,.6); }
+    .cam-close { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.15); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
+    .cam-close svg { width:20px; height:20px; }
+
+    /* Bottom controls */
+    .cam-bottom { position:absolute; bottom:0; left:0; right:0; padding:24px 40px max(env(safe-area-inset-bottom),36px); background:linear-gradient(to top,rgba(0,0,0,.72),transparent); display:flex; align-items:center; justify-content:space-around; z-index:10; }
+
+    /* Shutter */
+    .shutter { width:74px; height:74px; border-radius:50%; background:#fff; border:5px solid rgba(255,255,255,.35); cursor:pointer; position:relative; transition:transform .1s,box-shadow .1s; box-shadow:0 0 0 6px rgba(255,255,255,.18); flex-shrink:0; }
+    .shutter:active { transform:scale(.9); }
+    .shutter::after { content:''; position:absolute; inset:6px; border-radius:50%; background:#fff; border:2px solid #ddd; }
+
+    /* Control buttons */
+    .cam-ctrl { width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,.15); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; transition:background .2s; }
+    .cam-ctrl svg { width:20px; height:20px; }
+    .cam-ctrl.torch-on { background:rgba(255,220,0,.3); color:#FFE000; }
+
+    /* Flash overlay */
+    #flash-overlay { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .08s; z-index:9; }
+
+    /* Permission error */
+    #cam-error { position:absolute; inset:0; background:#111; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:32px; text-align:center; color:#fff; z-index:20; }
+    #cam-error svg { width:52px; height:52px; color:#ef4444; }
+    #cam-error h3 { font-size:18px; font-weight:700; }
+    #cam-error p  { font-size:13px; color:rgba(255,255,255,.6); line-height:1.6; }
+    #cam-error button { margin-top:8px; padding:12px 28px; border-radius:12px; background:var(--blue); color:#fff; border:none; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-icon"><i data-lucide="id-card"></i></div>
+  <div>
+    <div class="hdr-title">Chụp CCCD Pro</div>
+    <div class="hdr-sub" id="progress-note">Chưa có ảnh nào</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="stepper-track"><div class="stepper-fill" id="stepper-fill"></div></div>
+    <div class="step active" id="step-1"><div class="step-dot">1</div><span class="step-label">Mặt trước</span></div>
+    <div class="step"        id="step-2"><div class="step-dot">2</div><span class="step-label">Mặt sau</span></div>
+    <div class="step"        id="step-3"><div class="step-dot">3</div><span class="step-label">Chủ thể</span></div>
+  </div>
+
+  <!-- Mặt Trước -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">1. Mặt trước CCCD</div>
+      <div class="badge-done" id="badge-front"><i data-lucide="check-circle-2"></i> Đã chụp</div>
+    </div>
+    <p class="card-desc">Đặt mặt trước CCCD vào khung, giữ thẳng và đủ sáng</p>
+    <div class="preview-wrap landscape">
+      <img class="preview-img" id="preview-front" alt="Mặt trước">
+      <div class="preview-placeholder" id="ph-front">
+        <svg viewBox="0 0 856 539" fill="none" class="card-svg">
+          <rect width="856" height="539" rx="30" fill="#E0E7F5"/>
+          <circle cx="120" cy="120" r="40" fill="#B8C8E8"/>
+          <rect x="200" y="100" width="380" height="32" rx="8" fill="#B8C8E8"/>
+          <rect x="200" y="148" width="280" height="24" rx="8" fill="#B8C8E8"/>
+          <rect x="70" y="200" width="100" height="130" rx="10" fill="#B8C8E8"/>
+          <rect x="200" y="220" width="480" height="18" rx="4" fill="#B8C8E8"/>
+          <rect x="200" y="258" width="380" height="18" rx="4" fill="#B8C8E8"/>
+        </svg>
+      </div>
+      <button class="retake-btn" id="retake-front" onclick="openCamera('front')">
+        <i data-lucide="refresh-cw"></i> Chụp lại
+      </button>
+    </div>
+    <button class="btn btn-primary" onclick="openCamera('front')">
+      <i data-lucide="camera"></i> Mở camera chụp mặt trước
+    </button>
+  </div>
+
+  <!-- Mặt Sau -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">2. Mặt sau CCCD</div>
+      <div class="badge-done" id="badge-back"><i data-lucide="check-circle-2"></i> Đã chụp</div>
+    </div>
+    <p class="card-desc">Lật mặt sau CCCD, đặt vào khung hình và chụp</p>
+    <div class="preview-wrap landscape">
+      <img class="preview-img" id="preview-back" alt="Mặt sau">
+      <div class="preview-placeholder" id="ph-back">
+        <svg viewBox="0 0 856 539" fill="none" class="card-svg">
+          <rect width="856" height="539" rx="30" fill="#E0E7F5"/>
+          <rect x="50" y="50" width="100" height="80" rx="10" fill="#B8C8E8"/>
+          <rect x="50" y="400" width="500" height="36" rx="8" fill="#B8C8E8"/>
+          <rect x="660" y="340" width="150" height="150" rx="10" fill="#B8C8E8"/>
+        </svg>
+      </div>
+      <button class="retake-btn" id="retake-back" onclick="openCamera('back')">
+        <i data-lucide="refresh-cw"></i> Chụp lại
+      </button>
+    </div>
+    <button class="btn btn-primary" onclick="openCamera('back')">
+      <i data-lucide="camera"></i> Mở camera chụp mặt sau
+    </button>
+  </div>
+
+  <!-- Chân Dung -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">3. Ảnh chân dung</div>
+      <div class="badge-done" id="badge-portrait"><i data-lucide="check-circle-2"></i> Đã chụp</div>
+    </div>
+    <p class="card-desc">Chụp ảnh chân dung rõ nét, nhìn thẳng, đủ sáng</p>
+    <div class="preview-wrap portrait">
+      <img class="preview-img" id="preview-portrait" alt="Chân dung">
+      <div class="preview-placeholder" id="ph-portrait">
+        <i data-lucide="user" style="width:44px;height:44px;color:var(--blue);opacity:.4"></i>
+        <span>Chân dung</span>
+      </div>
+      <button class="retake-btn" id="retake-portrait" onclick="openCamera('portrait')">
+        <i data-lucide="refresh-cw"></i> Chụp lại
+      </button>
+    </div>
+    <button class="btn btn-primary" onclick="openCamera('portrait')">
+      <i data-lucide="camera"></i> Mở camera chụp chân dung
+    </button>
+  </div>
+
+  <!-- Thông tin -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Thông tin cá nhân <span style="font-weight:400;color:var(--text-2);font-size:12px">(tuỳ chọn)</span></div>
+    </div>
+    <p class="card-desc">Được in vào file xuất cuối cùng</p>
+    <div class="form-grid">
+      <div class="field field-full"><label>Họ và tên</label><input type="text" id="info-name" placeholder="Nguyễn Văn A"></div>
+      <div class="field"><label>Số điện thoại</label><input type="tel" id="info-phone" placeholder="09xx xxx xxx"></div>
+      <div class="field"><label>Ngày sinh</label><input type="date" id="info-dob"></div>
+      <div class="field"><label>Giới tính</label>
+        <select id="info-gender"><option value="">Chọn</option><option>Nam</option><option>Nữ</option><option>Khác</option></select>
+      </div>
+      <div class="field"><label>Email</label><input type="email" id="info-email" placeholder="abc@gmail.com"></div>
+      <div class="field field-full"><label>Địa chỉ</label><input type="text" id="info-address" placeholder="Số nhà, đường, quận, tỉnh..."></div>
+    </div>
+  </div>
+
+  <!-- Xuất file -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px">Định dạng xuất file</div>
+    <div class="export-grid">
+      <label class="export-opt">
+        <input type="radio" name="export-type" value="jpg" checked>
+        <div class="export-card"><i data-lucide="image"></i><span>Ảnh JPG</span><small>Dễ chia sẻ</small></div>
+      </label>
+      <label class="export-opt">
+        <input type="radio" name="export-type" value="pdf">
+        <div class="export-card"><i data-lucide="file-text"></i><span>PDF A4</span><small>In ấn chuyên nghiệp</small></div>
+      </label>
+    </div>
+  </div>
+
+</main>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+  <button class="btn-export" id="btn-export" onclick="exportFile()">
+    <div class="spinner" id="spinner"></div>
+    <i data-lucide="download" id="export-icon"></i>
+    <span id="export-text">Xuất file ngay</span>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ CAMERA OVERLAY ══════════════ -->
+<div id="cam-overlay">
+  <video id="cam-video" autoplay playsinline muted></video>
+
+  <div class="cam-guide-wrap">
+    <div class="cam-guide landscape" id="cam-guide">
+      <div class="c3"></div><div class="c4"></div>
+      <div class="scan-line"></div>
+    </div>
+  </div>
+
+  <div class="cam-top">
+    <button class="cam-close" onclick="closeCamera()"><i data-lucide="x"></i></button>
+    <div class="cam-hint" id="cam-hint">Đặt mặt trước vào khung</div>
+    <div style="width:36px"></div>
+  </div>
+
+  <div class="cam-bottom">
+    <button class="cam-ctrl" id="btn-torch" onclick="toggleTorch()" title="Đèn flash">
+      <i data-lucide="zap-off"></i>
+    </button>
+    <button class="shutter" id="shutter-btn" onclick="capturePhoto()"></button>
+    <button class="cam-ctrl" onclick="flipCamera()" title="Đổi camera">
+      <i data-lucide="flip-horizontal-2"></i>
+    </button>
+  </div>
+
+  <div id="flash-overlay"></div>
+
+  <div id="cam-error">
+    <i data-lucide="camera-off"></i>
+    <h3>Không thể truy cập camera</h3>
+    <p>Vui lòng cho phép trình duyệt truy cập camera trong cài đặt, rồi nhấn thử lại.</p>
+    <button onclick="retryCam()">Thử lại</button>
+    <button onclick="closeCamera()" style="background:rgba(255,255,255,.1);margin-top:4px">Đóng</button>
+  </div>
+</div>
+
+<canvas id="export-canvas"></canvas>
+<canvas id="snap-canvas"></canvas>
+
+<script>
+  lucide.createIcons();
+
+  const state = { front: null, back: null, portrait: null };
+  let currentSide = null, stream = null, facingMode = 'environment', torchOn = false, torchTrack = null;
+
+  /* ── Toast ── */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  /* ── Stepper ── */
+  function updateStepper() {
+    const keys = ['front','back','portrait'], ids = ['step-1','step-2','step-3'];
+    keys.forEach((k,i) => {
+      const el = document.getElementById(ids[i]);
+      el.classList.toggle('done', !!state[k]);
+      el.classList.toggle('active', !state[k] && keys.slice(0,i).every(p => state[p]));
+    });
+    const n = keys.filter(k => state[k]).length;
+    document.getElementById('stepper-fill').style.width = n===0?'0%':n===1?'50%':'100%';
+    document.getElementById('progress-note').textContent =
+      n===0 ? 'Chưa có ảnh nào' : n===3 ? '✓ Đủ 3 ảnh — sẵn sàng xuất' : `${n}/3 ảnh đã chụp xong`;
+  }
+
+  /* ── Open Camera ── */
+  async function openCamera(side) {
+    currentSide = side;
+    const overlay = document.getElementById('cam-overlay');
+    document.getElementById('cam-error').style.display = 'none';
+    overlay.classList.add('open');
+
+    const isPortrait = side === 'portrait';
+    const guide = document.getElementById('cam-guide');
+    guide.className = 'cam-guide ' + (isPortrait ? 'portrait' : 'landscape');
+
+    document.getElementById('cam-hint').textContent =
+      side === 'front'    ? 'Đặt mặt trước CCCD vào khung' :
+      side === 'back'     ? 'Đặt mặt sau CCCD vào khung'   :
+                            'Nhìn thẳng vào camera';
+
+    facingMode = isPortrait ? 'user' : 'environment';
+    torchOn = false;
+    document.getElementById('btn-torch').classList.remove('torch-on');
+
+    await startStream();
+  }
+
+  async function startStream() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    const constraints = { video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const video = document.getElementById('cam-video');
+      video.srcObject = stream;
+      torchTrack = stream.getVideoTracks()[0];
+      const caps = torchTrack.getCapabilities?.() || {};
+      document.getElementById('btn-torch').style.visibility = caps.torch ? 'visible' : 'hidden';
+    } catch(err) {
+      console.error(err);
+      document.getElementById('cam-error').style.display = 'flex';
+      lucide.createIcons();
+    }
+  }
+
+  async function retryCam() {
+    document.getElementById('cam-error').style.display = 'none';
+    await startStream();
+  }
+
+  function closeCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    document.getElementById('cam-overlay').classList.remove('open');
+    document.getElementById('cam-video').srcObject = null;
+    currentSide = null; torchOn = false;
+  }
+
+  async function flipCamera() {
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    torchOn = false;
+    document.getElementById('btn-torch').classList.remove('torch-on');
+    await startStream();
+  }
+
+  async function toggleTorch() {
+    if (!torchTrack) return;
+    torchOn = !torchOn;
+    try {
+      await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+      const btn = document.getElementById('btn-torch');
+      btn.classList.toggle('torch-on', torchOn);
+      btn.innerHTML = torchOn ? '<i data-lucide="zap"></i>' : '<i data-lucide="zap-off"></i>';
+      lucide.createIcons();
+    } catch(e) { console.warn('Torch N/A'); }
+  }
+
+  /* ── Capture ── */
+  function capturePhoto() {
+    const video = document.getElementById('cam-video');
+    if (!video.srcObject) return;
+
+    // Flash
+    const fl = document.getElementById('flash-overlay');
+    fl.style.opacity = '1';
+    setTimeout(() => fl.style.opacity = '0', 110);
+
+    // Snapshot to canvas
+    const canvas = document.getElementById('snap-canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+
+    if (facingMode === 'user') { ctx.translate(canvas.width,0); ctx.scale(-1,1); }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    state[currentSide] = dataUrl;
+
+    // Update preview
+    const img     = document.getElementById(`preview-${currentSide}`);
+    const ph      = document.getElementById(`ph-${currentSide}`);
+    const badge   = document.getElementById(`badge-${currentSide}`);
+    const retake  = document.getElementById(`retake-${currentSide}`);
+    img.src = dataUrl; img.classList.add('show');
+    ph.style.display = 'none';
+    badge.classList.add('show');
+    retake.classList.add('show');
+
+    updateStepper();
+    lucide.createIcons();
+    closeCamera();
+    showToast('✓ Đã chụp ' + ({ front:'mặt trước', back:'mặt sau', portrait:'chân dung' }[currentSide]));
+  }
+
+  /* ── Export ── */
+  function setLoading(on) {
+    document.getElementById('btn-export').disabled = on;
+    document.getElementById('spinner').style.display = on ? 'block' : 'none';
+    document.getElementById('export-icon').style.display = on ? 'none' : 'inline-block';
+    document.getElementById('export-text').textContent = on ? 'Đang xử lý...' : 'Xuất file ngay';
+  }
+
+  async function exportFile() {
+    const hasImages = state.front || state.back || state.portrait;
+    const hasInfo = ['info-name','info-phone','info-dob','info-email','info-address'].some(id => document.getElementById(id).value.trim());
+    if (!hasImages && !hasInfo) { showToast('Vui lòng chụp ít nhất 1 ảnh!'); return; }
+    setLoading(true);
+    try {
+      if (document.querySelector('input[name="export-type"]:checked').value === 'jpg') await generateJPG();
+      else await generatePDF();
+      showToast('✓ Xuất file thành công!');
+    } catch(e) { console.error(e); showToast('Có lỗi xảy ra, vui lòng thử lại!'); }
+    finally { setLoading(false); }
+  }
+
+  function loadImg(src) { return new Promise(r => { const i=new Image(); i.onload=()=>r(i); i.src=src; }); }
+  function getInfo() {
+    return { name: document.getElementById('info-name').value||'N/A', phone: document.getElementById('info-phone').value||'N/A',
+             dob:  document.getElementById('info-dob').value||'N/A',  gender: document.getElementById('info-gender').value||'N/A',
+             email:document.getElementById('info-email').value||'N/A', address:document.getElementById('info-address').value||'N/A' };
+  }
+
+  function rr(ctx,x,y,w,h,r) {
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+    ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+    ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+  }
+
+  async function generateJPG() {
+    const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
+    const W=2480, H=1748; canvas.width=W; canvas.height=H;
+    ctx.fillStyle='#f8fafc'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#1D6AFF'; ctx.fillRect(0,0,W,110);
+    ctx.fillStyle='#fff'; ctx.font='bold 56px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('HỒ SƠ CĂN CƯỚC CÔNG DÂN',W/2,74);
+
+    const cW=870, cH=Math.round(cW*53.98/85.6), M=80;
+    const drawCard = async (src,x,y,w,h) => {
+      const img=await loadImg(src);
+      rr(ctx,x,y,w,h,20); ctx.fillStyle='#E0E7F5'; ctx.fill();
+      ctx.save(); rr(ctx,x,y,w,h,20); ctx.clip(); ctx.drawImage(img,x,y,w,h); ctx.restore();
+      ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=3; rr(ctx,x,y,w,h,20); ctx.stroke();
+    };
+
+    if (state.front)    await drawCard(state.front, M, 150, cW, cH);
+    if (state.back)     await drawCard(state.back, M+cW+60, 150, cW, cH);
+    if (state.portrait) await drawCard(state.portrait, W-M-380, 150, 380, Math.round(380*4/3));
+
+    const info=getInfo(), iTop=150+cH+70;
+    ctx.fillStyle='#1D6AFF'; ctx.font='bold 44px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('THÔNG TIN CÁ NHÂN',M,iTop);
+    ctx.fillStyle='#CBD5E1'; ctx.fillRect(M,iTop+16,900,3);
+    ctx.fillStyle='#111827'; ctx.font='38px sans-serif';
+    let iy=iTop+80; const c2=M+900;
+    ctx.fillText(`Họ và tên:  ${info.name}`,M,iy);   ctx.fillText(`Số ĐT:  ${info.phone}`,c2,iy); iy+=65;
+    ctx.fillText(`Ngày sinh:  ${info.dob}`,M,iy);    ctx.fillText(`Giới tính:  ${info.gender}`,c2,iy); iy+=65;
+    ctx.fillText(`Email:  ${info.email}`,M,iy); iy+=65;
+    ctx.fillText(`Địa chỉ:  ${info.address}`,M,iy);
+    ctx.font='italic 28px sans-serif'; ctx.fillStyle='#9CA3AF'; ctx.textAlign='right';
+    ctx.fillText(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`,W-M,H-50);
+
+    const a=document.createElement('a');
+    a.download=`CCCD_${info.name.replace(/\s/g,'_')}.jpg`;
+    a.href=canvas.toDataURL('image/jpeg',.92); a.click();
+  }
+
+  async function generatePDF() {
+    const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+    const pw=doc.internal.pageSize.getWidth(), M=14, info=getInfo();
+    doc.setFillColor(29,106,255); doc.rect(0,0,pw,22,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont('helvetica','bold');
+    doc.text('HỒ SƠ CĂN CƯỚC CÔNG DÂN',pw/2,14,{align:'center'});
+
+    const cW=85.6, cH=53.98; let y=28;
+    if (state.front)    { doc.addImage(state.front,'JPEG',M,y,cW,cH); doc.setDrawColor(200,200,200); doc.rect(M,y,cW,cH); }
+    if (state.back)     { doc.addImage(state.back,'JPEG',M+cW+6,y,cW,cH); doc.rect(M+cW+6,y,cW,cH); }
+    if (state.portrait) { const pW=36,pH=pW*4/3; doc.addImage(state.portrait,'JPEG',pw-M-pW,y,pW,pH); doc.rect(pw-M-pW,y,pW,pH); }
+
+    y+=cH+14;
+    doc.setTextColor(29,106,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('THÔNG TIN CÁ NHÂN',M,y); y+=5;
+    doc.setDrawColor(29,106,255); doc.setLineWidth(.4); doc.line(M,y,pw-M,y); y+=9;
+
+    doc.setTextColor(30,30,30); doc.setFontSize(10); const c2=pw/2+4;
+    const row=(l1,v1,l2,v2)=>{
+      doc.setFont('helvetica','bold'); doc.setTextColor(100);
+      doc.text(l1,M,y); if(l2) doc.text(l2,c2,y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(30);
+      doc.text(v1,M+28,y); if(v2) doc.text(v2,c2+26,y); y+=9;
+    };
+    row('Họ và tên:',info.name,'Số ĐT:',info.phone);
+    row('Ngày sinh:',info.dob,'Giới tính:',info.gender);
+    row('Email:',info.email,null,null);
+    row('Địa chỉ:',info.address,null,null);
+
+    const ph=doc.internal.pageSize.getHeight();
+    doc.setFontSize(7); doc.setTextColor(170);
+    doc.text(`Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,pw-M,ph-8,{align:'right'});
+    doc.save(`CCCD_${info.name.replace(/\s/g,'_')}.pdf`);
+  }
+
+  updateStepper();
+</script>
+</body>
+</html>
