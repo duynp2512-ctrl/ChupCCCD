@@ -21,21 +21,10 @@
     }
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     body { font-family:'Be Vietnam Pro',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:110px; -webkit-tap-highlight-color:transparent; }
-<div class="agri-banner">
-  <img src="logo.png" alt="Agribank Logo" class="agri-logo">
-  <div class="agri-title">CHƯƠNG TRÌNH CHỤP ẢNH CCCD TỰ ĐỘNG</div>
-  <div class="agri-contact">Liên hệ hỗ trợ: Mr. Nguyễn Phúc Duy - 0966.555.692</div>
-</div>
-    /* Header */
-    header { position:sticky; top:0; z-index:40; background:rgba(255,255,255,.88); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:13px 18px; display:flex; align-items:center; gap:12px; }
-    @media (prefers-color-scheme:dark) { header { background:rgba(24,27,34,.88); } }
-    .hdr-icon { width:36px; height:36px; border-radius:10px; background:var(--blue); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .hdr-icon svg { color:#fff; width:18px; height:18px; }
-    .hdr-title { font-size:16px; font-weight:700; letter-spacing:-.3px; }
-    .hdr-sub { font-size:11px; color:var(--text-2); margin-top:1px; }
-/* Banner Agribank bổ sung */
+
+    /* Banner Agribank bổ sung */
     .agri-banner {
-      background: #B2001F; /* Màu đỏ tiêu chuẩn của Agribank */
+      background: #B2001F;
       color: #ffffff;
       padding: 18px 16px 14px;
       display: flex;
@@ -44,26 +33,32 @@
       text-align: center;
       gap: 4px;
     }
-    
     .agri-logo {
       height: 38px;
       object-fit: contain;
       margin-bottom: 6px;
     }
-    
     .agri-title {
       font-size: 15px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    
     .agri-contact {
       font-size: 13px;
       font-weight: 500;
       opacity: 0.9;
       margin-top: 2px;
     }
+
+    /* Header */
+    header { position:sticky; top:0; z-index:40; background:rgba(255,255,255,.88); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:13px 18px; display:flex; align-items:center; gap:12px; }
+    @media (prefers-color-scheme:dark) { header { background:rgba(24,27,34,.88); } }
+    .hdr-icon { width:36px; height:36px; border-radius:10px; background:var(--blue); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .hdr-icon svg { color:#fff; width:18px; height:18px; }
+    .hdr-title { font-size:16px; font-weight:700; letter-spacing:-.3px; }
+    .hdr-sub { font-size:11px; color:var(--text-2); margin-top:1px; }
+
     /* Main */
     main { max-width:520px; margin:0 auto; padding:18px 14px; display:flex; flex-direction:column; gap:12px; }
 
@@ -102,7 +97,7 @@
     .preview-placeholder { display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px; }
     .preview-placeholder span { font-size:12px; color:var(--text-2); font-weight:500; }
     .card-svg { width:75%; opacity:.3; }
-    .preview-img { width:100%; height:100%; object-fit:cover; display:none; }
+    .preview-img { width:100%; height:100%; object-fit:contain; display:none; }
     .preview-img.show { display:block; }
     .retake-btn { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,.55); color:#fff; border:none; border-radius:8px; padding:5px 10px; font-size:11px; font-weight:600; cursor:pointer; display:none; align-items:center; gap:4px; font-family:inherit; }
     .retake-btn.show { display:flex; }
@@ -208,6 +203,12 @@
 </head>
 <body>
 
+<div class="agri-banner">
+  <img src="logo.png" alt="Agribank Logo" class="agri-logo">
+  <div class="agri-title">CHƯƠNG TRÌNH CHỤP ẢNH CCCD TỰ ĐỘNG</div>
+  <div class="agri-contact">Liên hệ hỗ trợ: Mr. Nguyễn Phúc Duy - 0966.555.692</div>
+</div>
+
 <header>
   <div class="hdr-icon"><i data-lucide="id-card"></i></div>
   <div>
@@ -218,7 +219,6 @@
 
 <main>
 
-  <!-- Stepper -->
   <div class="stepper">
     <div class="stepper-track"><div class="stepper-fill" id="stepper-fill"></div></div>
     <div class="step active" id="step-1"><div class="step-dot">1</div><span class="step-label">Mặt trước</span></div>
@@ -226,7 +226,6 @@
     <div class="step"        id="step-3"><div class="step-dot">3</div><span class="step-label">Chủ thể</span></div>
   </div>
 
-  <!-- Mặt Trước -->
   <div class="card">
     <div class="card-header">
       <div class="card-title">1. Mặt trước CCCD</div>
@@ -255,7 +254,6 @@
     </button>
   </div>
 
-  <!-- Mặt Sau -->
   <div class="card">
     <div class="card-header">
       <div class="card-title">2. Mặt sau CCCD</div>
@@ -281,7 +279,6 @@
     </button>
   </div>
 
-  <!-- Chân Dung -->
   <div class="card">
     <div class="card-header">
       <div class="card-title">3. Ảnh chân dung</div>
@@ -303,7 +300,6 @@
     </button>
   </div>
 
-  <!-- Thông tin -->
   <div class="card">
     <div class="card-header">
       <div class="card-title">Thông tin cá nhân <span style="font-weight:400;color:var(--text-2);font-size:12px">(tuỳ chọn)</span></div>
@@ -321,7 +317,6 @@
     </div>
   </div>
 
-  <!-- Xuất file -->
   <div class="card">
     <div class="card-title" style="margin-bottom:14px">Định dạng xuất file</div>
     <div class="export-grid">
@@ -338,7 +333,6 @@
 
 </main>
 
-<!-- Bottom bar -->
 <div class="bottom-bar">
   <button class="btn-export" id="btn-export" onclick="exportFile()">
     <div class="spinner" id="spinner"></div>
@@ -349,7 +343,6 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ══════════════ CAMERA OVERLAY ══════════════ -->
 <div id="cam-overlay">
   <video id="cam-video" autoplay playsinline muted></video>
 
@@ -534,15 +527,11 @@
       ctx.scale(-1, 1); 
     }
 
-    // Vẽ phần ảnh đã cắt lên canvas
-    // ctx.drawImage(image, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH)
     ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
-    // Lưu ảnh
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     state[currentSide] = dataUrl;
 
-    // Cập nhật giao diện
     const img     = document.getElementById(`preview-${currentSide}`);
     const ph      = document.getElementById(`ph-${currentSide}`);
     const badge   = document.getElementById(`badge-${currentSide}`);
@@ -594,39 +583,33 @@
 
   async function generateJPG() {
     const canvas = document.getElementById('export-canvas'), ctx = canvas.getContext('2d');
-    // Khổ A4 đứng (300dpi): Rộng 2480 x Cao 3508
     const W = 2480, H = 3508; canvas.width = W; canvas.height = H;
     ctx.fillStyle = '#f8fafc'; ctx.fillRect(0,0,W,H);
     ctx.fillStyle = '#1D6AFF'; ctx.fillRect(0,0,W,130);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 56px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('HỒ SƠ CĂN CƯỚC CÔNG DÂN', W/2, 85);
 
-    // --- QUY ĐỔI KÍCH THƯỚC (1cm = 118.11px) ---
     const cm2px = 118.11;
-    const wID = 10 * cm2px;       // 10cm = ~1181px
-    const hID = 7 * cm2px;        // 7cm = ~827px
-    const sizePortrait = 10 * cm2px; // 10cm x 10cm = ~1181px
+    const wID = 10 * cm2px;       
+    const hID = 7 * cm2px;        
+    const sizePortrait = 10 * cm2px; 
 
-    // --- TÍNH TOÁN VỊ TRÍ ---
-    const gapX = 40; // Khoảng cách giữa 2 thẻ CCCD (px)
-    const startX = (W - (wID * 2 + gapX)) / 2; // Canh giữa cả 2 thẻ trên trang
-    const startY = 180; // Vị trí Y bắt đầu
-    const portraitY = startY + hID + 100; // Cách thẻ CCCD 100px xuống dưới
+    const gapX = 40; 
+    const startX = (W - (wID * 2 + gapX)) / 2; 
+    const startY = 180; 
+    const portraitY = startY + hID + 100; 
 
-    // Hàm phụ vẽ ảnh ép đúng kích thước
     const drawImg = async (src, x, y, w, h) => {
       const img = await loadImg(src);
-      ctx.drawImage(img, x, y, w, h); // Ép cứng width, height
+      ctx.drawImage(img, x, y, w, h); 
       ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 4; 
       ctx.strokeRect(x, y, w, h);
     };
 
-    // Vẽ 3 ảnh
     if (state.front)    await drawImg(state.front, startX, startY, wID, hID);
     if (state.back)     await drawImg(state.back, startX + wID + gapX, startY, wID, hID);
     if (state.portrait) await drawImg(state.portrait, (W - sizePortrait) / 2, portraitY, sizePortrait, sizePortrait);
 
-    // --- PHẦN THÔNG TIN CÁ NHÂN ---
     let currentY = portraitY + sizePortrait + 160;
     const info = getInfo(), M = 150;
     ctx.fillStyle = '#1D6AFF'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'left';
@@ -648,39 +631,34 @@
     a.href = canvas.toDataURL('image/jpeg', 0.92); a.click();
   }
 
- async function generatePDF() {
+  async function generatePDF() {
     const {jsPDF} = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4'); // 'p' = Đứng, 'mm' = Milimet
+    const doc = new jsPDF('p', 'mm', 'a4'); 
     const pw = doc.internal.pageSize.getWidth(), M = 14, info = getInfo();
     
     doc.setFillColor(29, 106, 255); doc.rect(0, 0, pw, 22, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(15); doc.setFont('helvetica', 'bold');
     doc.text('HỒ SƠ CĂN CƯỚC CÔNG DÂN', pw / 2, 14, {align: 'center'});
 
-    // --- KÍCH THƯỚC CHUẨN (mm) ---
-    const wID = 100; // 10cm
-    const hID = 70;  // 7cm
-    const sizePortrait = 100; // 10cm x 10cm
+    const wID = 100; 
+    const hID = 70;  
+    const sizePortrait = 100; 
 
-    // --- TÍNH TOÁN VỊ TRÍ ---
     const startY = 32;
-    const gapX = 4; // Khoảng cách giữa 2 thẻ: 4mm
-    const startX = (pw - (wID * 2 + gapX)) / 2; // Cân giữa trang
-    const portraitY = startY + hID + 12; // Cách 12mm xuống dưới
+    const gapX = 4; 
+    const startX = (pw - (wID * 2 + gapX)) / 2; 
+    const portraitY = startY + hID + 12; 
 
-    // Hàm phụ vẽ ảnh PDF
     const drawImgPdf = async (src, x, y, w, h) => {
         doc.addImage(src, 'JPEG', x, y, w, h);
         doc.setDrawColor(200, 200, 200); 
         doc.rect(x, y, w, h);
     };
 
-    // Vẽ 3 ảnh
     if (state.front)    await drawImgPdf(state.front, startX, startY, wID, hID);
     if (state.back)     await drawImgPdf(state.back, startX + wID + gapX, startY, wID, hID);
     if (state.portrait) await drawImgPdf(state.portrait, (pw - sizePortrait) / 2, portraitY, sizePortrait, sizePortrait);
 
-    // --- PHẦN THÔNG TIN CÁ NHÂN ---
     let infoY = portraitY + sizePortrait + 15;
     doc.setTextColor(29, 106, 255); doc.setFontSize(13); doc.setFont('helvetica', 'bold');
     doc.text('THÔNG TIN CÁ NHÂN', M, infoY); infoY += 6;
