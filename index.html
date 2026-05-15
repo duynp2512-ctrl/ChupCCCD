@@ -569,7 +569,11 @@
       if (document.querySelector('input[name="export-type"]:checked').value === 'jpg') await generateJPG();
       else await generatePDF();
       showToast('✓ Xuất file thành công!');
-    } catch(e) { console.error(e); showToast('Có lỗi xảy ra, vui lòng thử lại!'); }
+    } catch(e) { 
+      console.error(e); 
+      alert('Lỗi xuất file: ' + e.message); // Hiển thị lỗi rõ ràng nếu có
+      showToast('Có lỗi xảy ra, vui lòng thử lại!'); 
+    }
     finally { setLoading(false); }
   }
 
@@ -616,11 +620,11 @@
     if (state.portrait) await drawImg(state.portrait, (W - sizePortrait) / 2, portraitY, sizePortrait, sizePortrait);
 
     const info = getInfo();
-    const hasInfo = Object.values(info).some(val => val !== ''); // Kiểm tra xem có điền thông tin nào không
+    const hasInfo = Object.values(info).some(val => val !== '');
+    const M = 150; // <--- Biến M đã được đưa ra ngoài để không bị lỗi ReferenceError
 
     if (hasInfo) {
       let currentY = portraitY + sizePortrait + 160;
-      const M = 150;
       ctx.fillStyle = '#1D6AFF'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'left';
       ctx.fillText('THÔNG TIN CÁ NHÂN', M, currentY);
       ctx.fillStyle = '#CBD5E1'; ctx.fillRect(M, currentY + 20, W - M * 2, 3);
