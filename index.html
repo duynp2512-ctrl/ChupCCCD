@@ -21,7 +21,11 @@
     }
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     body { font-family:'Be Vietnam Pro',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:110px; -webkit-tap-highlight-color:transparent; }
-
+<div class="agri-banner">
+  <img src="logo.png" alt="Agribank Logo" class="agri-logo">
+  <div class="agri-title">CHƯƠNG TRÌNH CHỤP ẢNH CCCD TỰ ĐỘNG</div>
+  <div class="agri-contact">Liên hệ hỗ trợ: Mr. Nguyễn Phúc Duy - 0966.555.692</div>
+</div>
     /* Header */
     header { position:sticky; top:0; z-index:40; background:rgba(255,255,255,.88); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:13px 18px; display:flex; align-items:center; gap:12px; }
     @media (prefers-color-scheme:dark) { header { background:rgba(24,27,34,.88); } }
@@ -29,7 +33,37 @@
     .hdr-icon svg { color:#fff; width:18px; height:18px; }
     .hdr-title { font-size:16px; font-weight:700; letter-spacing:-.3px; }
     .hdr-sub { font-size:11px; color:var(--text-2); margin-top:1px; }
-
+/* Banner Agribank bổ sung */
+    .agri-banner {
+      background: #B2001F; /* Màu đỏ tiêu chuẩn của Agribank */
+      color: #ffffff;
+      padding: 18px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    
+    .agri-logo {
+      height: 38px;
+      object-fit: contain;
+      margin-bottom: 6px;
+    }
+    
+    .agri-title {
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .agri-contact {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.9;
+      margin-top: 2px;
+    }
     /* Main */
     main { max-width:520px; margin:0 auto; padding:18px 14px; display:flex; flex-direction:column; gap:12px; }
 
