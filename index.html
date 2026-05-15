@@ -459,24 +459,56 @@
     const video = document.getElementById('cam-video');
     if (!video.srcObject) return;
 
-    // Flash
+    // Hiệu ứng chớp Flash
     const fl = document.getElementById('flash-overlay');
     fl.style.opacity = '1';
     setTimeout(() => fl.style.opacity = '0', 110);
 
-    // Snapshot to canvas
+    // Lấy thông số kích thước hiển thị trên màn hình
+    const videoRect = video.getBoundingClientRect();
+    const guide = document.getElementById('cam-guide');
+    const guideRect = guide.getBoundingClientRect();
+
+    // Tính toán tỷ lệ scale do video đang dùng thuộc tính object-fit: cover
+    const scale = Math.max(videoRect.width / video.videoWidth, videoRect.height / video.videoHeight);
+    const renderW = video.videoWidth * scale;
+    const renderH = video.videoHeight * scale;
+
+    // Tính độ lệch (do video cover bị tràn ra ngoài màn hình)
+    const offsetX = (renderW - videoRect.width) / 2;
+    const offsetY = (renderH - videoRect.height) / 2;
+
+    // Tọa độ của khung guide trên video thực tế
+    const guideLeftRendered = (guideRect.left - videoRect.left) + offsetX;
+    const guideTopRendered = (guideRect.top - videoRect.top) + offsetY;
+
+    // Quy đổi ra pixel thực của độ phân giải camera
+    const cropX = guideLeftRendered / scale;
+    const cropY = guideTopRendered / scale;
+    const cropW = guideRect.width / scale;
+    const cropH = guideRect.height / scale;
+
+    // Cài đặt canvas bằng đúng kích thước của khung (đã crop)
     const canvas = document.getElementById('snap-canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = cropW;
+    canvas.height = cropH;
     const ctx = canvas.getContext('2d');
 
-    if (facingMode === 'user') { ctx.translate(canvas.width,0); ctx.scale(-1,1); }
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Nếu là camera trước thì lật ảnh (mirror)
+    if (facingMode === 'user') { 
+      ctx.translate(canvas.width, 0); 
+      ctx.scale(-1, 1); 
+    }
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    // Vẽ phần ảnh đã cắt lên canvas
+    // ctx.drawImage(image, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH)
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+    // Lưu ảnh
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     state[currentSide] = dataUrl;
 
-    // Update preview
+    // Cập nhật giao diện
     const img     = document.getElementById(`preview-${currentSide}`);
     const ph      = document.getElementById(`ph-${currentSide}`);
     const badge   = document.getElementById(`badge-${currentSide}`);
